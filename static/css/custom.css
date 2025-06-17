@@ -1,0 +1,8 @@
+.login-logo img {
+    width: 120px !important;       
+    height: 120px !important;       
+    object-fit: cover;
+    border-radius: 50% !important;  
+    display: block;
+    margin: 0 auto;                
+}

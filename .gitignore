@@ -1,0 +1,19 @@
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Django migrations
+**/migrations/
+!**/migrations/__init__.py
+
+# Cache and temp files
+*.log
+*.tmp
+*.swp
+
+# Virtual environment
+venv/
+.venv/
+
+# Env variables
+.env

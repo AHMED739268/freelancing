@@ -17,7 +17,7 @@ class Student(models.Model):
     
     #[SENU]: ADD NECESSARY
     student_image = models.ImageField(upload_to='students/images/')
-    face_encoding = models.JSONField()
+    face_encoding = models.JSONField(null=True, blank=True)
 
     def __str__(self):
         return self.name

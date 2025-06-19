@@ -149,3 +149,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # [SENU]: HANDLE IMAGE STORE
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+
+# [SENU]: SYNC TIMINIG IN ADMIN
+TIME_ZONE = 'Africa/Cairo'
+USE_TZ = True
+

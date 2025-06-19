@@ -15,7 +15,7 @@ class Student(models.Model):
     
     #[SENU]: 
     student_image = models.ImageField(upload_to='students/images/')
-    face_encoding = models.JSONField()
+    face_encoding = models.JSONField(null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -26,3 +26,7 @@ class Student(models.Model):
 class Instructor(models.Model):
     name = models.CharField(max_length=100)
     Instructor_image = models.ImageField(upload_to='instructors/images/') 
+
+    # printing
+    def __str__(self):
+        return self.name

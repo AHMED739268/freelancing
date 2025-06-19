@@ -20,8 +20,40 @@
   <div class="max-w-7xl mx-auto bg-white shadow-lg overflow-hidden">
 
     <div class="bg-blue-100 text-blue-700 px-6 py-4 text-xl font-semibold">
-      Class Camera View
+      {{ classroom }}
     </div>
+
+  <!-- === Cards row === -->
+  <div class="grid grid-cols-3 gap-0 px-6 py-4 border-b border-gray-300 max-w-7xl mx-auto">
+
+    <!-- Instructor Card -->
+    <div class="bg-green-100 p-3 rounded-l-lg shadow-md flex items-center space-x-4 border-r border-green-300">
+      {% if instructor_lecture.Instructor_image %}
+        <img src="{{ instructor_lecture.Instructor_image.url }}" alt="{{ instructor_lecture.name }}" class="w-16 h-16 rounded-full object-cover border-2 border-green-400" />
+      {% else %}
+        <div class="w-16 h-16 rounded-full bg-green-300 flex items-center justify-center text-white font-bold">No Img</div>
+      {% endif %}
+      <div>
+        <p class="text-green-700 font-semibold text-lg">{{ instructor_lecture.name }}</p>
+      </div>
+    </div>
+
+    <!-- Timer Card -->
+    <div class="bg-yellow-100 px-6 py-3 flex flex-col items-center justify-center shadow-md border-r border-yellow-300">
+      <div class="text-yellow-800 font-semibold text-lg mb-1">
+        {{ lecture_start_ampm }} - {{ lecture_end_ampm }}
+      </div>      
+      <div id="countdown" class="text-yellow-900 font-bold text-xl"></div>
+    </div>
+
+    <!-- Level Card -->
+    <div class="bg-red-100 text-red-800 px-4 py-2 rounded-r-lg shadow flex items-center justify-center font-bold text-lg">
+      Level: <span class="font-medium ml-2">{{ level }}</span>
+    </div>
+
+  </div>
+  <!-- === End cards row === -->
+
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
 
@@ -32,12 +64,11 @@
 
       <!-- CLASS INFO & STUDENTS -->
       <div class="space-y-6">
-        <div class="bg-red-100 text-red-800 px-4 py-2 rounded-lg shadow text-lg font-bold">
-          Level: <span class="font-medium">Primary 5</span>
-        </div>
+
+        <!-- Remove old Level card from here -->
 
         <div class="bg-green-100 text-green-800 px-4 py-2 rounded-lg shadow text-lg font-bold">
-          Subject: <span class="font-medium">Mathematics</span>
+          Subject: <span class="font-medium">{{ course_name }}</span>
         </div>
 
         <div class="bg-gray-50 p-4 rounded-lg shadow">
@@ -45,7 +76,6 @@
 
           <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
             {% for student in students %}
-
               <!-- STUDENT CARD -->
               {% include "classroom/components/student_card.html" %}
             {% endfor %}
@@ -59,8 +89,51 @@
 
   <script>
     lucide.createIcons();
+
+    // Countdown Timer Logic (based on your lecture_start and lecture_end)
+    function parseTime(t) {
+      let parts = t.split(':');
+      let now = new Date();
+      now.setHours(parseInt(parts[0]), parseInt(parts[1]), parts.length > 2 ? parseInt(parts[2]) : 0, 0);
+      return now;
+    }
+
+    function updateCountdown() {
+      const startStr = "{{ lecture_start }}";
+      const endStr = "{{ lecture_end }}";
+      const now = new Date();
+
+      const startTime = parseTime(startStr);
+      const endTime = parseTime(endStr);
+
+      let diffMs;
+      if (now < startTime) {
+        diffMs = startTime - now;
+        document.getElementById('countdown').textContent = "Starts in: " + msToTime(diffMs);
+      } else if (now > endTime) {
+        document.getElementById('countdown').textContent = "Lecture ended";
+      } else {
+        diffMs = endTime - now;
+        document.getElementById('countdown').textContent = "Ends in: " + msToTime(diffMs);
+      }
+    }
+
+    function msToTime(duration) {
+      let seconds = Math.floor((duration / 1000) % 60);
+      let minutes = Math.floor((duration / (1000 * 60)) % 60);
+      let hours = Math.floor(duration / (1000 * 60 * 60));
+
+      // Pad numbers with leading zeros if less than 10
+      const pad = (num) => num.toString().padStart(2, '0');
+
+      return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+    }
+
+
+
+    setInterval(updateCountdown, 1000);
+    updateCountdown();
   </script>
-  
 
 </body>
 </html>

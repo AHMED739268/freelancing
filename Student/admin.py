@@ -9,6 +9,7 @@ class StudentAdmin(admin.ModelAdmin):
     list_filter = ['level']
     search_fields = ['name']
     filter_horizontal = ('courses',)
+    fields = ('name', 'age', 'level', 'courses', 'student_image')
 
 
 # [SENU]: add instructor

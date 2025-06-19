@@ -18,5 +18,8 @@ venv/
 # Env variables
 .env
 
-
+# DB
 db.sqlite3
+
+# IMAGES
+media/

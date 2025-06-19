@@ -47,4 +47,7 @@ class Course(models.Model):
         related_name='courses'  # [SENU] allows classroom.courses.all()
     )
 
-    # add the data
+
+
+    def __str__(self):
+        return self.name

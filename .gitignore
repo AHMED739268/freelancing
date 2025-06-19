@@ -3,7 +3,7 @@ __pycache__/
 *.py[cod]
 
 # Django migrations
-# **/migrations/
+**/migrations/
 # !**/migrations/__init__.py
 
 # Cache and temp files
@@ -18,5 +18,8 @@ venv/
 # Env variables
 .env
 
-
+# DB
 db.sqlite3
+
+# IMAGES
+media/

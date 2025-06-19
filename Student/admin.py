@@ -5,7 +5,7 @@ from .models import Student, Instructor
 
 @admin.register(Student)
 class StudentAdmin(admin.ModelAdmin):
-    list_display = ['name', 'age', 'level', 'user']
+    list_display = ['name', 'age', 'level'] # [SENU]: removed user [we don't need it]
     list_filter = ['level']
     search_fields = ['name']
     filter_horizontal = ('courses',)

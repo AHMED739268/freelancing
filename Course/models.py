@@ -46,3 +46,8 @@ class Course(models.Model):
         Classroom, on_delete=models.CASCADE,
         related_name='courses'  # [SENU] allows classroom.courses.all()
     )
+
+
+
+    def __str__(self):
+        return self.name

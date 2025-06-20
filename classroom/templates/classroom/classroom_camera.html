@@ -7,90 +7,107 @@
   <meta charset="UTF-8">
   <title>Class Camera</title>
 
-  <!-- tailwind css -->
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- icons -->
+  <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
-
 </head>
+
 <body class="bg-gray-100 min-h-screen p-6">
 
-  <!-- PAGE CONTAINER -->
+  <!-- === PAGE CONTAINER === -->
   <div class="max-w-7xl mx-auto bg-white shadow-lg overflow-hidden">
 
+    <!-- === CLASSROOM TITLE === -->
     <div class="bg-blue-100 text-blue-700 px-6 py-4 text-xl font-semibold">
       {{ classroom }}
     </div>
 
-  <!-- === Cards row === -->
-  <div class="grid grid-cols-3 gap-0 px-6 py-4 border-b border-gray-300 max-w-7xl mx-auto">
+    <!-- === TOP CARDS ROW === -->
+    <div class="grid grid-cols-3 gap-0 px-6 py-4 border-b border-gray-300 max-w-7xl mx-auto">
 
-    <!-- Instructor Card -->
-    <div class="bg-green-100 p-3 rounded-l-lg shadow-md flex items-center space-x-4 border-r border-green-300">
-      {% if instructor_lecture.Instructor_image %}
-        <img src="{{ instructor_lecture.Instructor_image.url }}" alt="{{ instructor_lecture.name }}" class="w-16 h-16 rounded-full object-cover border-2 border-green-400" />
-      {% else %}
-        <div class="w-16 h-16 rounded-full bg-green-300 flex items-center justify-center text-white font-bold">No Img</div>
-      {% endif %}
-      <div>
-        <p class="text-green-700 font-semibold text-lg">{{ instructor_lecture.name }}</p>
+      <!-- Instructor Card -->
+      <div class="bg-green-100 p-3 rounded-l-lg shadow-md flex items-center space-x-4 border-r border-green-300">
+        {% if instructor_lecture.Instructor_image %}
+          <img src="{{ instructor_lecture.Instructor_image.url }}" alt="{{ instructor_lecture.name }}" class="w-16 h-16 rounded-full object-cover border-2 border-green-400" />
+        {% else %}
+          <div class="w-16 h-16 rounded-full bg-green-300 flex items-center justify-center text-white font-bold">No Img</div>
+        {% endif %}
+        <div>
+          <p class="text-green-700 font-semibold text-lg">{{ instructor_lecture.name }}</p>
+        </div>
       </div>
-    </div>
 
-    <!-- Timer Card -->
-    <div class="bg-yellow-100 px-6 py-3 flex flex-col items-center justify-center shadow-md border-r border-yellow-300">
-      <div class="text-yellow-800 font-semibold text-lg mb-1">
-        {{ lecture_start_ampm }} - {{ lecture_end_ampm }}
-      </div>      
-      <div id="countdown" class="text-yellow-900 font-bold text-xl"></div>
-    </div>
+      <!-- Lecture Time + Countdown -->
+      <div class="bg-yellow-100 px-6 py-3 flex flex-col items-center justify-center shadow-md border-r border-yellow-300">
+        <div class="text-yellow-800 font-semibold text-lg mb-1">
+          {{ lecture_start_ampm }} - {{ lecture_end_ampm }}
+        </div>      
+        <div id="countdown" class="text-yellow-900 font-bold text-xl"></div>
+      </div>
 
-    <!-- Level Card -->
-    <div class="bg-red-100 text-red-800 px-4 py-2 rounded-r-lg shadow flex items-center justify-center font-bold text-lg">
-      Level: <span class="font-medium ml-2">{{ level }}</span>
-    </div>
+      <!-- Level Info -->
+      <div class="bg-red-100 text-red-800 px-4 py-2 rounded-r-lg shadow flex items-center justify-center font-bold text-lg">
+        Level: <span class="font-medium ml-2">{{ level }}</span>
+      </div>
 
-  </div>
-  <!-- === End cards row === -->
+    </div> <!-- === END TOP CARDS === -->
 
 
+    <!-- === MAIN CONTENT: VIDEO + STUDENTS === -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
 
-      <!-- VIDEO STREAM -->
-      <div class="flex justify-center items-center border rounded-lg shadow p-4 bg-black">
-        <img src="{% url 'video_stream' %}" alt="Live Video Feed" class="rounded-lg w-full max-h-[400px] object-contain border-4 border-blue-300">
+      <!-- VIDEO STREAM WITH LOADING INDICATOR -->
+      <div class="relative flex justify-center items-center border rounded-lg shadow p-4 bg-black h-[400px]">
+        <!-- [SENU]: LOADING SPINNER WHILE CAMERA CONNECTS -->
+        <div id="video-loader" class="absolute inset-0 flex justify-center items-center bg-black bg-opacity-80 z-10">
+          <svg class="animate-spin h-10 w-10 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+          </svg>
+        </div>
+
+        <!-- [SENU]: LIVE CAMERA FEED USING STREAMING -->
+        <img
+          id="video-feed"
+          src="{% url 'classrooms:video_stream' classroom.id %}"
+          alt="Live Video Feed"
+          class="rounded-lg w-full max-h-[400px] object-contain border-4 border-blue-300"
+          onload="hideVideoLoader()"
+        />
       </div>
 
       <!-- CLASS INFO & STUDENTS -->
       <div class="space-y-6">
 
-        <!-- Remove old Level card from here -->
-
+        <!-- Course Info -->
         <div class="bg-green-100 text-green-800 px-4 py-2 rounded-lg shadow text-lg font-bold">
           Subject: <span class="font-medium">{{ course_name }}</span>
         </div>
 
+        <!-- Student Cards -->
         <div class="bg-gray-50 p-4 rounded-lg shadow">
           <h3 class="text-lg font-semibold text-gray-700 mb-4">Students</h3>
 
           <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
             {% for student in students %}
-              <!-- STUDENT CARD -->
+              <!-- STUDENT CARD TEMPLATE -->
               {% include "classroom/components/student_card.html" %}
             {% endfor %}
           </div>
         </div>
       </div>
 
-    </div>
-  </div>
+    </div> <!-- END GRID -->
+  </div> <!-- END PAGE CONTAINER -->
 
 
+  <!-- === COUNTDOWN & VIDEO LOADER SCRIPT === -->
   <script>
     lucide.createIcons();
 
-    // Countdown Timer Logic (based on your lecture_start and lecture_end)
+    // [SENU]: Countdown Timer Based on Lecture Time
     function parseTime(t) {
       let parts = t.split(':');
       let now = new Date();
@@ -123,13 +140,14 @@
       let minutes = Math.floor((duration / (1000 * 60)) % 60);
       let hours = Math.floor(duration / (1000 * 60 * 60));
 
-      // Pad numbers with leading zeros if less than 10
       const pad = (num) => num.toString().padStart(2, '0');
-
       return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
     }
 
-
+    // [SENU]: Hide video loader when camera is ready
+    function hideVideoLoader() {
+      document.getElementById("video-loader").style.display = "none";
+    }
 
     setInterval(updateCountdown, 1000);
     updateCountdown();

@@ -5,10 +5,34 @@ from deepface import DeepFace
 from django.core.exceptions import ValidationError
 import cv2
 import numpy as np
+#####[AMS] 
+from django.utils import timezone
+###################
 
+
+#########[AMS] ABSENSE MANAGEMENT SYSTEM
+######### LOGIC STARTS HERE 
+class Attendance(models.Model):
+    SESSION_TYPES = (
+        ('lecture', 'Lecture'),
+        ('section', 'Section'),
+    )
+    student = models.ForeignKey('Student', on_delete=models.CASCADE)
+    course = models.ForeignKey('Course.Course', on_delete=models.CASCADE)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    present = models.BooleanField(default=True)
+    session_type = models.CharField(max_length=10, choices=SESSION_TYPES, default='lecture')
+    
+    def __str__(self):
+        status = "Present" if self.present else "Absent"
+        return f"{self.student.name} - {self.course.name} - {self.session_type} ({status})"
+########################################################
 
 class Student(models.Model):
     name = models.CharField(max_length=100)
+    # [AMS] EMAIL FIELD TO SEND TO STUDENT
+    email = models.EmailField(blank=True, null=True)
+    #####################################
     age = models.PositiveIntegerField()
     level = models.ForeignKey(Level, on_delete=models.CASCADE)
     courses = models.ManyToManyField(Course)
@@ -52,6 +76,37 @@ class Student(models.Model):
 
     def __str__(self):
         return self.name
+    
+###########[AMS] ADD AN ATTR TO GET NEXT COURSE FOR STUDENT
+    def get_next_course(self):
+        now = timezone.localtime()
+        current_time = now.time()
+        current_day = now.strftime('%a')
+        
+        # Get upcoming courses within next 24 hours
+        upcoming = []
+        for course in self.courses.all():
+            # Check lecture
+            if course.day_of_lecture == current_day and course.start_lecture > current_time:
+                upcoming.append({
+                    'course': course,
+                    'start': course.start_lecture,
+                    'location': course.classroom,
+                    'type': 'Lecture'
+                })
+            # Check section
+            if course.day_of_section == current_day and course.start_section > current_time:
+                upcoming.append({
+                    'course': course,
+                    'start': course.start_section,
+                    'location': course.classroom,
+                    'type': 'Section'
+                })
+        
+        # Return nearest course
+        return min(upcoming, key=lambda x: x['start']) if upcoming else None
+
+##################################################
 
 
 

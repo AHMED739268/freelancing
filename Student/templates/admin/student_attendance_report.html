@@ -1,0 +1,163 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block extrahead %}
+    <link rel="stylesheet" href="{% static 'css/admin_reports.css' %}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="report-container">
+    <div class="report-header">
+        <h1 class="report-title">Attendance Report for {{ student.name }}</h1>
+        <div class="report-subtitle">
+            Level: {{ student.level }} | Student ID: {{ student.id }}
+        </div>
+    </div>
+    
+    <div class="summary-stats no-print">
+        <div class="stat-card">
+            <h3>TOTAL CLASSES ATTENDED</h3>
+            <div class="stat-value">{{ total_present }}</div>
+        </div>
+        <div class="stat-card">
+            <h3>TOTAL ABSENCES</h3>
+            <div class="stat-value">{{ total_absent }}</div>
+        </div>
+        <div class="stat-card">
+            <h3>OVERALL ATTENDANCE</h3>
+            <div class="stat-value">{{ overall_percentage }}%</div>
+        </div>
+    </div>
+    
+    <div class="summary-section">
+        <h2 class="section-title">Summary by Course</h2>
+        
+        <div class="chart-container no-print">
+            <canvas id="courseChart"></canvas>
+        </div>
+        
+        <table class="attendance-table">
+            <thead>
+                <tr>
+                    <th>Course</th>
+                    <th>Total Classes</th>
+                    <th>Present</th>
+                    <th>Absent</th>
+                    <th>Attendance %</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in summary %}
+                <tr>
+                    <td>{{ item.course__name }}</td>
+                    <td>{{ item.total }}</td>
+                    <td>{{ item.present }}</td>
+                    <td>{{ item.absent }}</td>
+                    <td class="attendance-percentage 
+                        {% if item.percentage >= 90 %}high-percentage
+                        {% elif item.percentage >= 75 %}medium-percentage
+                        {% else %}low-percentage{% endif %}">
+                        {{ item.percentage }}%
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" style="text-align: center;">No attendance records found</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="detailed-records">
+        <h2 class="section-title">Detailed Attendance Records</h2>
+        
+        {% if attendance %}
+        <table class="attendance-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Course</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in attendance %}
+                <tr>
+                    <td>{{ record.timestamp|date:"Y-m-d H:i" }}</td>
+                    <td>{{ record.course.name }}</td>
+                    <td class="{% if record.present %}status-present{% else %}status-absent{% endif %}">
+                        {% if record.present %}Present{% else %}Absent{% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>No detailed records available</p>
+        {% endif %}
+    </div>
+    
+    <div class="no-print" style="margin-top: 30px; text-align: right;">
+        <button onclick="window.print()" class="button">Print Report</button>
+    </div>
+</div>
+
+<script>
+    // Course attendance chart
+    const courseCtx = document.getElementById('courseChart').getContext('2d');
+    const courseChart = new Chart(courseCtx, {
+        type: 'bar',
+        data: {
+            labels: [{% for item in summary %}'{{ item.course__name }}',{% endfor %}],
+            datasets: [{
+                label: 'Attendance Percentage',
+                data: [{% for item in summary %}{{ item.percentage }},{% endfor %}],
+                backgroundColor: [
+                    'rgba(52, 152, 219, 0.7)',
+                    'rgba(46, 204, 113, 0.7)',
+                    'rgba(155, 89, 182, 0.7)',
+                    'rgba(241, 196, 15, 0.7)',
+                    'rgba(230, 126, 34, 0.7)'
+                ],
+                borderColor: [
+                    'rgba(52, 152, 219, 1)',
+                    'rgba(46, 204, 113, 1)',
+                    'rgba(155, 89, 182, 1)',
+                    'rgba(241, 196, 15, 1)',
+                    'rgba(230, 126, 34, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    title: {
+                        display: true,
+                        text: 'Percentage'
+                    }
+                }
+            },
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Attendance by Course'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.parsed.y + '%';
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

@@ -48,4 +48,9 @@ def send_course_reminder(student):
             [student.email],
             fail_silently=False,
         )
-        
+      
+# [AMS] SENU START TO USE 
+# FETCH STUDENT FROM CAMERA 
+# CALL THE FOLLOWING METHODS   
+#  record_attendance(student)
+# send_course_reminder(student)

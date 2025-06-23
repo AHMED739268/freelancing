@@ -7,6 +7,8 @@ import cv2
 import numpy as np
 #####[AMS] 
 from django.utils import timezone
+from datetime import datetime, timedelta
+
 ###################
 
 
@@ -78,34 +80,129 @@ class Student(models.Model):
         return self.name
     
 ###########[AMS] ADD AN ATTR TO GET NEXT COURSE FOR STUDENT
+# Update the get_next_course method
     def get_next_course(self):
         now = timezone.localtime()
         current_time = now.time()
         current_day = now.strftime('%a')
         
-        # Get upcoming courses within next 24 hours
+        # Map day abbreviations to weekday numbers
+        day_map = {
+            'Mon': 0, 'Tue': 1, 'Wed': 2, 
+            'Thu': 3, 'Fri': 4, 'Sat': 5, 'Sun': 6
+        }
+        
+        # Create a list of all upcoming sessions
         upcoming = []
+        
         for course in self.courses.all():
-            # Check lecture
-            if course.day_of_lecture == current_day and course.start_lecture > current_time:
+            # Process lecture
+            if course.day_of_lecture:
+                # Calculate next lecture date
+                lecture_day_num = day_map[course.day_of_lecture]
+                current_weekday = now.weekday()
+                days_until_lecture = (lecture_day_num - current_weekday) % 7
+                if days_until_lecture == 0 and course.start_lecture <= current_time:
+                    days_until_lecture = 7  # Move to next week if already passed
+                next_lecture_date = now.date() + timedelta(days=days_until_lecture)
+                next_lecture_datetime = datetime.combine(next_lecture_date, course.start_lecture)
+                next_lecture_datetime = timezone.make_aware(next_lecture_datetime)
+                
                 upcoming.append({
                     'course': course,
                     'start': course.start_lecture,
+                    'datetime': next_lecture_datetime,
                     'location': course.classroom,
                     'type': 'Lecture'
                 })
-            # Check section
-            if course.day_of_section == current_day and course.start_section > current_time:
+            
+            # Process section
+            if course.day_of_section:
+                # Calculate next section date
+                section_day_num = day_map[course.day_of_section]
+                current_weekday = now.weekday()
+                days_until_section = (section_day_num - current_weekday) % 7
+                if days_until_section == 0 and course.start_section <= current_time:
+                    days_until_section = 7  # Move to next week if already passed
+                next_section_date = now.date() + timedelta(days=days_until_section)
+                next_section_datetime = datetime.combine(next_section_date, course.start_section)
+                next_section_datetime = timezone.make_aware(next_section_datetime)
+                
                 upcoming.append({
                     'course': course,
                     'start': course.start_section,
+                    'datetime': next_section_datetime,
                     'location': course.classroom,
                     'type': 'Section'
                 })
         
-        # Return nearest course
-        return min(upcoming, key=lambda x: x['start']) if upcoming else None
-
+        # Filter sessions in the future
+        future_sessions = [s for s in upcoming if s['datetime'] > now]
+        
+        # Return nearest session
+        return min(future_sessions, key=lambda x: x['datetime']) if future_sessions else None
+    
+    def get_current_course(self):
+        now = timezone.localtime()
+        current_time = now.time()
+        current_day = now.strftime('%a')
+        
+        # Map day abbreviations to weekday numbers
+        day_map = {
+            'Mon': 0, 'Tue': 1, 'Wed': 2, 
+            'Thu': 3, 'Fri': 4, 'Sat': 5, 'Sun': 6
+        }
+        
+        # Create a list of all upcoming sessions
+        upcoming = []
+        
+        for course in self.courses.all():
+            # Process lecture
+            if course.day_of_lecture:
+                # Calculate next lecture date
+                lecture_day_num = day_map[course.day_of_lecture]
+                current_weekday = now.weekday()
+                days_until_lecture = (lecture_day_num - current_weekday) % 7
+                if days_until_lecture == 0 and course.start_lecture <= current_time:
+                    days_until_lecture = 7  # Move to next week if already passed
+                next_lecture_date = now.date() + timedelta(days=days_until_lecture)
+                next_lecture_datetime = datetime.combine(next_lecture_date, course.start_lecture)
+                next_lecture_datetime = timezone.make_aware(next_lecture_datetime)
+                
+                upcoming.append({
+                    'course': course,
+                    'start': course.start_lecture,
+                    'datetime': next_lecture_datetime,
+                    'location': course.classroom,
+                    'type': 'Lecture'
+                })
+            
+            # Process section
+            if course.day_of_section:
+                # Calculate next section date
+                section_day_num = day_map[course.day_of_section]
+                current_weekday = now.weekday()
+                days_until_section = (section_day_num - current_weekday) % 7
+                if days_until_section == 0 and course.start_section <= current_time:
+                    days_until_section = 7  # Move to next week if already passed
+                next_section_date = now.date() + timedelta(days=days_until_section)
+                next_section_datetime = datetime.combine(next_section_date, course.start_section)
+                next_section_datetime = timezone.make_aware(next_section_datetime)
+                
+                upcoming.append({
+                    'course': course,
+                    'start': course.start_section,
+                    'datetime': next_section_datetime,
+                    'location': course.classroom,
+                    'type': 'Section'
+                })
+        
+        # Filter sessions in the future
+        future_sessions = [s for s in upcoming if s['datetime'] > now]
+        
+        # Return nearest session
+        return min(future_sessions, key=lambda x: x['datetime']) if future_sessions else None
+    
 ##################################################
 
 

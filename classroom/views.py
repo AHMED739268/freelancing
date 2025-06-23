@@ -8,11 +8,14 @@ import cv2
 import numpy as np
 import tempfile
 from deepface import DeepFace
+from django.utils import timezone
+from django.contrib import messages
+import threading
 
 from .models import Classroom
 from Student.models import Student
 from Course.models import Course
-
+from Student.utills import record_attendance, send_course_reminder
 
 THRESHOLD = 12.0  # Recommended for Facenet
 
@@ -22,9 +25,12 @@ def class_list_view(request):
     return render(request, 'classroom/class_grid.html', {'classes': classes})
 
 
-def gen_frames(level_students_encodings):
+def gen_frames(level_students_encodings, classroom_id):
     cap = cv2.VideoCapture(0)
-
+    processed_students = set()  # Track processed students in this session
+    last_processed = {}  # Track last processing time per student
+    classroom = Classroom.objects.get(id=classroom_id)
+    
     while True:
         success, frame = cap.read()
         if not success:
@@ -75,6 +81,40 @@ def gen_frames(level_students_encodings):
                         cv2.putText(frame, student['name'], (x, y - 10),
                                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
                         found = True
+                        
+                        # Process attendance and reminders
+                        student_id = student['id']
+                        current_time = timezone.now()
+                        
+                        # Process at most once per minute per student
+                        if student_id not in last_processed or \
+                           (current_time - last_processed[student_id]).seconds > 60:
+                            
+                            try:
+                                student_obj = Student.objects.get(id=student_id)
+                                
+                                # 1. Record attendance in background thread
+                                def record_attendance_thread():
+                                    recorded_course = record_attendance(student_obj, classroom)
+                                    if recorded_course:
+                                        print(f"Attendance recorded for {student_obj.name} in {recorded_course.name}")
+                                
+                                threading.Thread(target=record_attendance_thread).start()
+                                
+                                # 2. Send course reminder in background thread
+                                def send_reminder_thread():
+                                    send_course_reminder(student_obj)
+                                    print(f"Reminder sent to {student_obj.email}")
+                                
+                                threading.Thread(target=send_reminder_thread).start()
+                                
+                                # Update tracking
+                                last_processed[student_id] = current_time
+                                processed_students.add(student_id)
+                                
+                            except Exception as e:
+                                print(f"Error processing student {student_id}: {e}")
+                        
                         break
 
                 if not found:
@@ -113,12 +153,13 @@ def video_stream(request, classroom_id):
         for student in students:
             if student.face_encoding:
                 level_students_encodings.append({
+                    'id': student.id,  # Added student ID
                     'name': student.name,
                     'encoding': student.face_encoding
                 })
 
     return StreamingHttpResponse(
-        gen_frames(level_students_encodings),
+        gen_frames(level_students_encodings, classroom_id),
         content_type='multipart/x-mixed-replace; boundary=frame'
     )
 

@@ -14,7 +14,6 @@ class Command(BaseCommand):
         today = now.date()
         current_time = now.time()
         current_day = now.strftime('%a')  # e.g., 'Mon'
-
         # Find courses that ended today
         ended_courses = Course.objects.filter(
             Q(day_of_lecture=current_day, end_lecture__lt=current_time) |

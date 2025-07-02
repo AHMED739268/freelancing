@@ -27,6 +27,9 @@ INSTALLED_APPS = [
     'Course',
     'classroom',
 
+    # to show urls
+    'django_extensions',
+
     # [HAM]
     "jazzmin",
 

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="flex w-full h-screen bg-green-50">
+  <!-- Left Column -->
+  <div class="w-2/3 p-4 space-y-4">
+    <div class="bg-green-600 text-white p-4 rounded shadow text-xl font-bold">Reception Camera</div>
+    <div class="bg-white rounded shadow overflow-hidden">
+      <img src="{% url 'classrooms:reception_stream' %}" class="w-full h-[500px] object-cover" />
+    </div>
+  </div>
+
+  <!-- Right Column -->
+  <div class="w-1/3 p-4 space-y-4">
+    <div class="bg-green-600 text-white p-4 rounded shadow text-xl font-bold">📨 Emails Sent</div>
+    <div id="messages-box" class="bg-white h-[540px] overflow-y-auto rounded shadow-inner space-y-3 p-2">
+      <!-- Messages injected here -->
+    </div>
+  </div>
+</div>
+
+<script>
+async function fetchMessages() {
+  const res = await fetch("{% url 'classrooms:get_email_messages' %}");
+  const data = await res.json();
+  const box = document.getElementById("messages-box");
+  box.innerHTML = "";
+
+  if (data.messages.length === 0) {
+    box.innerHTML = `<div class="text-gray-500">No emails sent yet.</div>`;
+    return;
+  }
+
+  data.messages.forEach(msg => {
+    const div = document.createElement("div");
+    div.className = "bg-green-100 text-green-800 px-4 py-2 rounded shadow-sm";
+    div.innerText = msg;
+    box.appendChild(div);
+  });
+}
+
+fetchMessages();
+setInterval(fetchMessages, 3000);
+</script>
+{% endblock %}

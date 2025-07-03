@@ -86,7 +86,7 @@ DATABASES = {
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
-
+# [SENU]: Corrected IndentationError by removing erroneous 'Messrs' prefix
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -101,6 +101,7 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+
 JAZZMIN_SETTINGS = {
 
     "site_title": "Admin Dashboard",
@@ -116,7 +117,28 @@ JAZZMIN_SETTINGS = {
     "navigation_expanded": True,
     "hide_apps": [],
     "hide_models": [],
-    "custom_css": "css/custom.css"
+    "custom_css": "css/custom.css",
+    # [SENU]: Add custom link to reception page and Font Awesome for sidebar icon
+    "custom_links": {
+        "classroom": [
+            {
+                "name": "Reception Page",
+                "url": "classrooms:reception_page",
+                "icon": "fas fa-camera",
+                "permissions": ["auth.view_user"],
+            },
+            # [SENU]: Placeholder for additional custom page (uncomment and configure if needed)
+            # {
+            #     "name": "Another Page",
+            #     "url": "classrooms:another_page",
+            #     "icon": "fas fa-book",
+            #     "permissions": ["auth.view_user"],
+            # }
+        ]
+    },
+    "extra_css": [
+        "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+    ]
 }
 
 

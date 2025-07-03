@@ -23,7 +23,7 @@ def gen_frames(level_students_encodings, classroom_id):
     cap = cv2.VideoCapture(0)
     processed_students = set()
     last_processed = {}
-    classroom = Classroom.objects.get(id=classroom_id)
+    classroom = Classroom.objects.get(id=classroom_id) # error might be here 
 
     while True:
         success, frame = cap.read()
@@ -135,6 +135,8 @@ def video_stream(request, classroom_id):
                     'encoding': student.face_encoding
                 })
 
+    print("classroom:", classroom_id) # debug
+
     return StreamingHttpResponse(
         gen_frames(level_students_encodings, classroom_id),
         content_type='multipart/x-mixed-replace; boundary=frame'
@@ -195,80 +197,66 @@ def classroom_camera_page(request, classroom_id):
 
 from .templates.classroom.email_log import add_email_message
 
-def gen_reception_frames(level_students_encodings, classroom_id):
-    cap = cv2.VideoCapture(0)
+def gen_reception_frames(level_students_encodings):
 
+    cap = cv2.VideoCapture(0)
     if not cap.isOpened():
         print("❌ Camera not opened!")
         return
+    print("✅ Camera opened successfully")
     processed_students = set()
     last_processed = {}
-    classroom = Classroom.objects.get(id=classroom_id)
-
+    
     while True:
         success, frame = cap.read()
         if not success:
+            print("❌ Failed to read frame")
             break
-
         try:
             rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             face_locations = face_recognition.face_locations(rgb_frame)
             face_encodings = face_recognition.face_encodings(rgb_frame, face_locations)
-
             for (top, right, bottom, left), face_embedding in zip(face_locations, face_encodings):
                 best_match = None
                 best_distance = 1.0
                 MATCH_THRESHOLD = 0.6
-
                 for student in level_students_encodings:
                     known_encoding = np.array(student['encoding'])
                     if len(known_encoding) != 128:
                         continue
-
                     distance = face_recognition.face_distance([known_encoding], face_embedding)[0]
-
                     if distance < best_distance:
                         best_distance = distance
                         best_match = student
-
                 if best_match and best_distance < MATCH_THRESHOLD:
                     name = best_match['name']
                     student_id = best_match['id']
                     current_time = timezone.now()
-
                     cv2.rectangle(frame, (left, top), (right, bottom), (0, 180, 0), 2)
                     cv2.putText(frame, name, (left, top - 10),
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 180, 0), 2)
-
                     if student_id not in last_processed or \
-                        (current_time - last_processed[student_id]).seconds > 60:
-
+                            (current_time - last_processed[student_id]).seconds > 60:
                         try:
                             student_obj = Student.objects.get(id=student_id)
-
                             def send_reminder_thread():
                                 send_course_reminder(student_obj)
                                 add_email_message(f"📧 Reminder sent to {student_obj.email}")
-
                             threading.Thread(target=send_reminder_thread).start()
                             last_processed[student_id] = current_time
-
                         except Exception as e:
                             print(f"Error sending reminder: {e}")
-
                 else:
                     cv2.rectangle(frame, (left, top), (right, bottom), (128, 128, 128), 2)
                     cv2.putText(frame, "Unknown", (left, top - 10),
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.7, (128, 128, 128), 2)
-
         except Exception as e:
             print("Frame Error:", e)
-
         ret, buffer = cv2.imencode('.jpg', frame)
         frame = buffer.tobytes()
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
-
+    cap.release()  # Ensure camera is released when done
 
 # FOR STREAMING FOR THE NEW PAGE
 
@@ -276,7 +264,6 @@ def gen_reception_frames(level_students_encodings, classroom_id):
 def reception_stream(request):
     students = Student.objects.all()
     level_students_encodings = []
-
     for student in students:
         if student.face_encoding and len(student.face_encoding) == 128:
             level_students_encodings.append({
@@ -284,9 +271,8 @@ def reception_stream(request):
                 'name': student.name,
                 'encoding': student.face_encoding
             })
-
     return StreamingHttpResponse(
-        gen_reception_frames(level_students_encodings, classroom_id=None),
+        gen_reception_frames(level_students_encodings),
         content_type='multipart/x-mixed-replace; boundary=frame'
     )
 
